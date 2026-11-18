@@ -1,0 +1,31 @@
+test_invalid_child_output_is_error (test_checks.CheckTests.test_invalid_child_output_is_error) ... ok
+test_missing_ping_is_environment_error (test_checks.CheckTests.test_missing_ping_is_environment_error) ... ok
+test_overall_deadline_for_ping_and_tcp (test_checks.CheckTests.test_overall_deadline_for_ping_and_tcp) ... ok
+test_ping_detail_is_bounded (test_checks.CheckTests.test_ping_detail_is_bounded) ... ok
+test_ping_no_reply_and_tool_error (test_checks.CheckTests.test_ping_no_reply_and_tool_error) ... ok
+test_ping_pass_uses_arguments_and_timeout (test_checks.CheckTests.test_ping_pass_uses_arguments_and_timeout) ... ok
+test_real_process_timeout_including_blocked_dns (test_checks.CheckTests.test_real_process_timeout_including_blocked_dns) ... ok
+test_real_tcp_open_and_closed_ports (test_checks.CheckTests.test_real_tcp_open_and_closed_ports) ... ok
+test_subprocess_permission_error (test_checks.CheckTests.test_subprocess_permission_error) ... ok
+test_tcp_failure_classification (test_checks.CheckTests.test_tcp_failure_classification) ... ok
+test_invalid_structure_and_duplicate_names (test_config.ConfigTests.test_invalid_structure_and_duplicate_names) ... ok
+test_invalid_targets (test_config.ConfigTests.test_invalid_targets) ... ok
+test_invalid_timeouts (test_config.ConfigTests.test_invalid_timeouts) ... ok
+test_load_file_and_malformed_json (test_config.ConfigTests.test_load_file_and_malformed_json) ... ok
+test_port_boundaries_and_invalid_ports (test_config.ConfigTests.test_port_boundaries_and_invalid_ports) ... ok
+test_valid_hosts_and_default_timeout (test_config.ConfigTests.test_valid_hosts_and_default_timeout) ... ok
+test_valid_ping_has_no_port (test_config.ConfigTests.test_valid_ping_has_no_port) ... ok
+test_bad_config_cli_returns_two_without_reports (test_runner.RunnerTests.test_bad_config_cli_returns_two_without_reports) ... ok
+test_cli_missing_ping_writes_error_report (test_runner.RunnerTests.test_cli_missing_ping_writes_error_report) ... ok
+test_cli_real_local_checks (test_runner.RunnerTests.test_cli_real_local_checks) ... ok
+test_csv_formula_prefixes (test_runner.RunnerTests.test_csv_formula_prefixes) ... ok
+test_exit_code_precedence (test_runner.RunnerTests.test_exit_code_precedence) ... ok
+test_report_files_and_unique_run_folders (test_runner.RunnerTests.test_report_files_and_unique_run_folders) ... ok
+test_unwritable_output_returns_two (test_runner.RunnerTests.test_unwritable_output_returns_two) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.433s
+
+OK
+
+exit_code=0

@@ -1,0 +1,18 @@
+{
+  "checks": [
+    {
+      "name": "local-open",
+      "type": "tcp",
+      "host": "127.0.0.1",
+      "port": 59765,
+      "timeout": 2
+    },
+    {
+      "name": "local-closed",
+      "type": "tcp",
+      "host": "127.0.0.1",
+      "port": 45685,
+      "timeout": 2
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+test_invalid_structure_and_duplicate_names (test_config.ConfigTests.test_invalid_structure_and_duplicate_names) ... ok
+test_invalid_targets (test_config.ConfigTests.test_invalid_targets) ... 
+  test_invalid_targets (test_config.ConfigTests.test_invalid_targets) (host='x..') ... FAIL
+test_invalid_timeouts (test_config.ConfigTests.test_invalid_timeouts) ... ok
+test_load_file_and_malformed_json (test_config.ConfigTests.test_load_file_and_malformed_json) ... ok
+test_port_boundaries_and_invalid_ports (test_config.ConfigTests.test_port_boundaries_and_invalid_ports) ... ok
+test_valid_hosts_and_default_timeout (test_config.ConfigTests.test_valid_hosts_and_default_timeout) ... ok
+test_valid_ping_has_no_port (test_config.ConfigTests.test_valid_ping_has_no_port) ... ok
+
+======================================================================
+FAIL: test_invalid_targets (test_config.ConfigTests.test_invalid_targets) (host='x..')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/c1fcb0ce711e/linux-network-tests/tests/test_config.py", line 23, in test_invalid_targets
+    self.assertFalse(valid_host(host))
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.003s
+
+FAILED (failures=1)
+
+exit_code=1

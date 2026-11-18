@@ -1,0 +1,6 @@
+{
+  "checks": [
+    {"name": "loopback-ping", "type": "ping", "host": "127.0.0.1", "timeout": 2},
+    {"name": "local-web-port", "type": "tcp", "host": "127.0.0.1", "port": 8000, "timeout": 2}
+  ]
+}

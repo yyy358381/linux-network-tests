@@ -1,0 +1,3 @@
+name,type,host,port,timeout,status,reason,detail,started_at,duration_ms
+local-open,tcp,127.0.0.1,59765,2.0,PASS,connected,TCP connection established,2026-11-12T18:19:25.583451+00:00,28.135
+local-closed,tcp,127.0.0.1,45685,2.0,FAIL,connection_refused,TCP connection refused,2026-11-12T18:19:25.611710+00:00,20.493
