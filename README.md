@@ -1,132 +1,169 @@
-# Linux 网络自动化测试项目
+# Linux Network Testing & QA Validation
 
-使用 Python 执行 ICMP ping 和 TCP 端口检查，设置超时与失败判定，保存日志、JSON 和 CSV 结果，并配套自动化测试、测试用例及缺陷报告。项目使用 Python 标准库，无第三方 Python 依赖，适合学习 Linux 网络测试和作为 QA 项目练习。
+A Python command-line tool for ICMP ping and TCP port checks on Linux. The project includes JSON configuration, input validation, per-check timeouts, structured logs, JSON/CSV reports, and 24 automated tests.
 
-## 功能与项目规划
+This is an AI-assisted personal learning project focused on Linux testing, failure analysis, and QA documentation. It uses only the Python standard library.
 
-| 模块 | 第一版功能 | 代码 |
-| --- | --- | --- |
-| 配置 | JSON、主机/端口/超时校验、拒绝重复用例名 | `netcheck/config.py` |
-| 连通性 | 调用 Linux `ping`，每次发送一个 ICMP 请求 | `netcheck/checks.py` |
-| TCP 端口 | 建立并关闭 TCP 连接，支持 IP 或域名 | `netcheck/_tcp_probe.py` |
-| 超时与判定 | 区分超时、拒绝连接、DNS 错误和工具错误 | `netcheck/checks.py` |
-| 执行与报告 | 顺序执行，逐项日志，独立的运行目录，JSON/CSV 汇总 | `netcheck/runner.py` |
-| 命令行 | 读取配置、打印结果、返回自动化可用的退出码 | `netcheck/__main__.py` |
-| 验证 | 24 项自动化测试，真实本机 TCP 与受控故障 | `tests/` |
-| QA 文档 | 用例、真实已修复缺陷、模拟服务异常报告 | `docs/` |
+## Features
 
-第一版先完成配置 → 执行 → 判定 → 保存证据的流程。后续按需要增加 HTTP 状态码检查、重试、并发执行和定时运行；目前不依赖数据库或任务调度框架。
+- Run ICMP ping and TCP connection checks against IP addresses or hostnames.
+- Validate hostnames, ports, timeouts, and unique check names.
+- Distinguish connection refusal, timeouts, DNS failures, and execution errors.
+- Save each run in a separate folder with UTC logs and JSON/CSV reports.
+- Return exit codes for use in scripts and automation.
+- Include automated tests, manual test cases, historical defect evidence, and validation records.
 
-## 环境
+## Requirements
 
-- 目标系统：Linux，Python 3.10+；个人验证环境：Ubuntu，Python 3.12.3。
-- TCP 和测试套件只需要 Python。
-- ICMP 检查需要系统提供兼容 iputils 参数的 `ping`。可用 `command -v ping` 检查；Debian/Ubuntu 的软件包通常为 `iputils-ping`。
-- 运行时无需修改防火墙或使用 root。若环境限制 ICMP 权限，结果将记录为 `ERROR/ping_error`。
+- Linux with Python 3.10 or later.
+- No third-party Python packages.
+- ICMP checks require a Linux `ping` executable compatible with iputils arguments. On Ubuntu/Debian, this is typically provided by `iputils-ping`.
+- TCP checks and the automated test suite do not require `ping`.
 
-## 最快运行：无需外网、无需 ping
+Personal validation was performed on Ubuntu with Python 3.12.3. Initial development records and bundled sample reports use a separate Linux environment with Python 3.12.14.
 
-解压后进入目录：
+## Quick Start
+
+Download and extract the repository, or clone it:
 
 ```bash
+git clone https://github.com/yyy358381/linux-network-tests.git
 cd linux-network-tests
+```
+
+Run the automated tests:
+
+```bash
 python3 -m unittest discover -s tests -v
+```
+
+The test suite contains 24 test methods covering configuration validation, probe behavior, failure classification, reports, and CLI exit codes. Tests combine mocks with real local TCP connections and a controlled subprocess timeout.
+
+Run the local demonstration:
+
+```bash
 python3 demo.py
 ```
 
-`demo.py` 自动创建两个动态的本机 TCP 端口：一个监听，一个只绑定而不监听。预期输出为一个 `PASS/connected` 和一个 `FAIL/connection_refused`，因此**演示的退出码 1 是预期结果**。它用于展示失败证据，不表示测试程序有缺陷。
+The demo requires no internet access or `ping`. It creates two temporary local TCP ports: one listening and one bound without listening. Expected results are:
 
-报告默认保存到 `artifacts/<运行ID>/`：
+```text
+PASS local-open port=<dynamic-port> reason=connected
+FAIL local-closed port=<dynamic-port> reason=connection_refused
+```
 
-| 文件 | 内容 |
-| --- | --- |
-| `run.log` | UTC 时间、用例名、目标、超时、状态、耗时 |
-| `results.json` | 环境、汇总和每项检查的结构化结果 |
-| `results.csv` | 便于筛选、比较和导入表格的结果 |
-| `demo-config.json` | 仅演示生成，用于记录当次动态端口 |
+**The demo intentionally returns exit code 1.** The failed target check demonstrates failure reporting; it does not mean the tool malfunctioned. Ports are released when the demo finishes. Rerun the demo to obtain new ports rather than reusing a previous run's configuration.
 
-每次生成独立目录，不覆盖历史结果。动态端口在演示结束后释放；再次演示请重新运行 `demo.py`，不要复用旧端口号。
+## Check a Local Service
 
-## 运行 ping 和端口检查
-
-终端 A 启动一个本机 HTTP 服务，仅监听回环地址：
+In terminal A, start a local HTTP server:
 
 ```bash
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-终端 B 执行配置中的两项检查：
+In terminal B, from the project directory, run:
 
 ```bash
 python3 -m netcheck --config configs/local.json --output artifacts
 ```
 
-如果系统可正常 ping 回环地址且 HTTP 服务已启动，预期两项 `PASS`、退出码 0。停止终端 A 的 HTTP 服务后重新执行，端口检查通常变为 `FAIL/connection_refused`。ping 可能仍成功，因为 IP 连通与应用端口监听是不同条件。
+If loopback ICMP is permitted and the server is running, both checks should pass. Stop the server with `Ctrl+C` in terminal A and rerun the same check. The TCP check should normally return `FAIL / connection_refused`, while ping can still pass.
 
-个人验证已在 Ubuntu 上完成：本机回环地址 ping 成功；HTTP 服务启动时 TCP 端口检查通过，停止时返回 connection_refused；修改目标端口和无效超时配置的测试也符合预期。另已运行完整自动化测试套件，24 项通过。
+This demonstrates that IP reachability and a listening application port are separate conditions. The TCP check verifies connection establishment only; it does not send an HTTP request.
 
-docs/VALIDATION.md 保留了项目最初验证时的环境与限制；个人后续操作记录见 docs/my_validation.txt。
+## Configuration
 
-## 自定义配置
+Example configuration:
 
 ```json
 {
   "checks": [
-    {"name": "gateway-ping", "type": "ping", "host": "192.168.1.1", "timeout": 2},
-    {"name": "app-port", "type": "tcp", "host": "localhost", "port": 8000, "timeout": 3}
+    {"name": "loopback-ping", "type": "ping", "host": "127.0.0.1", "timeout": 2},
+    {"name": "local-web-port", "type": "tcp", "host": "127.0.0.1", "port": 8000, "timeout": 2}
   ]
 }
 ```
 
-上述网关地址仅是配置格式示例，按你的测试环境替换。
+| Field | Rules |
+| --- | --- |
+| `name` | Unique; 1–80 characters; starts with a letter or digit; remaining characters may include letters, digits, dots, underscores, and hyphens. |
+| `type` | `ping` or `tcp`. |
+| `host` | IPv4, IPv6, or a conventional ASCII hostname. URLs, whitespace, command options, scoped IPv6 addresses, and Unicode hostnames are outside the supported format. |
+| `timeout` | Finite number from 0.05 to 60 seconds; defaults to 2. |
+| `port` | Required for TCP; integer from 1 to 65535. Not accepted for ping. |
 
-- `name`：唯一用例名，1–80 字符，字母或数字开头，允许字母、数字、点、下划线和连字符。
-- `type`：`ping` 或 `tcp`。
-- `host`：IP 或域名，不包含 URL、端口、空白或命令参数。支持 IPv4、IPv6 和常规 ASCII 域名；不支持带 zone ID 的 IPv6 或 Unicode 域名。
-- `timeout`：每项检查的总体秒数，默认 2，范围 0.05–60，必须为有限数字。
-- `port`：仅 TCP 必填，整数 1–65535。
-- 配置一次包含 1–100 项检查，顺序执行；第一版不自动重试，避免掩盖首次失败。
+A configuration contains 1–100 checks, executed sequentially without retries.
 
-## 判定与退出码
+Included examples:
 
-| 状态 | 条件或原因 | 含义 |
+| File | Purpose |
+| --- | --- |
+| [`configs/local.json`](configs/local.json) | Loopback ping and TCP port 8000. |
+| [`configs/port8001.json`](configs/port8001.json) | The same checks with TCP port 8001. |
+| [`configs/invalid-timeout.json`](configs/invalid-timeout.json) | Intentional invalid input (`timeout: 0`) to verify configuration rejection. |
+
+## Reports and Exit Codes
+
+Each run writes to `artifacts/<run-id>/` by default:
+
+| File | Contents |
+| --- | --- |
+| `run.log` | UTC timestamps, check names, targets, statuses, reasons, and durations. |
+| `results.json` | Environment details, summary counts, and individual check results. |
+| `results.csv` | Individual results for spreadsheet review and filtering. |
+| `demo-config.json` | Generated by the demo only; records its temporary port configuration. |
+
+See [`sample-results/`](sample-results/) for a bundled historical TCP demo run with one passing and one failing target.
+
+| Status | Example reasons | Meaning |
 | --- | --- | --- |
-| PASS | `reply_received` | ping 返回成功 |
-| PASS | `connected` | TCP 三次握手成功 |
-| FAIL | `no_reply` | ping 返回 1，未收到成功响应 |
-| FAIL | `timeout` | 超出检查时限 |
-| FAIL | `connection_refused` | TCP 连接被明确拒绝 |
-| FAIL | `dns_error` | TCP 的域名解析失败 |
-| FAIL | `unreachable` / `network_error` | TCP 网络错误 |
-| ERROR | `missing_ping` / `ping_error` | 命令缺失、参数/权限或其他 ping 执行错误 |
-| ERROR | `execution_error` / `probe_error` | 无法启动子进程、子进程异常或返回格式异常 |
+| `PASS` | `reply_received`, `connected` | The target check succeeded. |
+| `FAIL` | `no_reply`, `timeout`, `connection_refused`, `dns_error`, `unreachable`, `network_error` | The target did not meet the expected connectivity condition. |
+| `ERROR` | `missing_ping`, `ping_error`, `execution_error`, `probe_error` | An environment or execution problem prevented a normal check result. |
 
-退出码：`0` 全部通过；`1` 存在 FAIL 且无 ERROR；`2` 存在 ERROR、配置无效或输出失败。ERROR 优先于 FAIL。有效配置的检查完成后保存报告；配置无效只在 stderr 提示并返回 2，不创建运行报告。输出目录不可写时无法保证报告生成。
+| Exit code | Meaning |
+| --- | --- |
+| `0` | All checks passed. |
+| `1` | At least one `FAIL`, with no `ERROR`. |
+| `2` | At least one `ERROR`, invalid configuration, or an output failure. |
 
-## 超时与检查范围
+`ERROR` takes precedence over `FAIL`. Invalid configurations produce an error message without creating a run report. Reports cannot be guaranteed when the output directory is not writable.
 
-TCP 连接放在独立 Python 子进程中，父进程设置总体超时，覆盖子进程启动、DNS 解析和多个地址连接的累计等待。超时后终止并回收子进程；不会因单独的 DNS 线程继续阻塞程序。ping 同样由父进程限时。实际耗时可能略超过配置值，因为进程创建、系统调度、终止和清理存在开销；这不是实时系统的严格时钟保证。
+## QA Documentation
 
-TCP PASS 仅表示连接成功，不验证 HTTP 响应、TLS、认证或业务功能。ping 失败不能单独证明设备宕机，也可能是 ICMP 被过滤。无回复、拒绝连接或超时可以提供故障线索，但不足以直接断定根因。第一版检查“期望主机可达 / 期望端口开放”，未实现“期望端口关闭”的策略。
+The linked documents currently contain Chinese descriptions, with English commands, identifiers, and test output.
 
-## 测试与缺陷材料
+| Document | Contents |
+| --- | --- |
+| [`docs/TEST_CASES.md`](docs/TEST_CASES.md) | Test scope, scenarios, expected results, and automated coverage mapping. |
+| [`docs/DEFECT_REPORTS.md`](docs/DEFECT_REPORTS.md) | Historical defect NET-001 and simulated environment incident LAB-001. |
+| [`docs/DEFECT_TEMPLATE.md`](docs/DEFECT_TEMPLATE.md) | Reusable defect report template. |
+| [`docs/VALIDATION.md`](docs/VALIDATION.md) | Initial development validation, later personal validation, and limitations. |
+| [`docs/my_validation.txt`](docs/my_validation.txt) | Personal validation checklist. |
+| [`docs/evidence/`](docs/evidence/) | Historical failure output and the initial automated test results. |
 
-- `docs/TEST_CASES.md`：测试计划、前置条件、步骤、预期和覆盖映射。
-- `docs/DEFECT_REPORTS.md`：真实已修复的 NET-001，以及明确标注的模拟环境报告 LAB-001。
-- `docs/DEFECT_TEMPLATE.md`：以后记录缺陷可直接填写的模板。
-- `docs/VALIDATION.md`：本次已验证内容、环境限制和结果说明。
-- `docs/evidence/`：修复前的失败输出、最终自动化测试输出。
-- `sample-results/`：真实执行本机 TCP 演示所生成的日志、JSON 和 CSV。
+**NET-001** is a bundled, previously fixed hostname validation defect: trailing-dot normalization incorrectly accepted `x..`. My work was to review the historical evidence and run post-fix verification and regression checks; I was not the original discoverer.
 
+**LAB-001** is a controlled environment exercise. The demo deliberately uses a bound, non-listening port to produce a real connection refusal. It is not a defect discovered in a production application.
 
-## 个人贡献与项目来源
+## My Contributions
 
-本项目在 AI 辅助下搭建，代码和自动化测试套件由 AI 提供并指导使用。本人完成了 Ubuntu 环境配置、SSH 操作、测试执行、配置修改、日志和报告分析，以及验证记录整理。
+The tool and automated test suite were provided with AI assistance and guidance. My hands-on work included:
 
-在 Ubuntu 上运行了 24 项自动化测试，并手工验证了服务启动与停止、目标端口修改、无效超时配置等场景。
+- Setting up Ubuntu and using SSH to operate the Linux environment and transfer project files.
+- Running the 24-test suite and reviewing test results.
+- Verifying real loopback ping and TCP behavior as a local service started and stopped.
+- Changing the configured TCP port from 8000 to 8001 and checking the resulting behavior.
+- Confirming that an invalid timeout was rejected with exit code 2.
+- Reviewing logs and JSON/CSV reports, maintaining validation records, and running regression checks for NET-001.
 
-NET-001 是项目附带的已修复历史缺陷，本人阅读了历史证据并执行修复后复测与正常输入回归验证。LAB-001 是模拟环境异常练习。
+## Scope and Limitations
 
-英文项目描述：
-
-> Validated a Python network testing tool on Ubuntu, executed 24 automated tests, and reviewed logs and JSON/CSV reports. Verified configuration handling and service availability, and performed regression checks for a documented historical defect.
+- TCP `PASS` confirms connection establishment, not HTTP responses, TLS, authentication, or business behavior.
+- Ping failure alone does not establish that a host is down; ICMP filtering and permissions can affect results.
+- Failure reasons provide diagnostic clues and do not independently establish a root cause.
+- TCP probes run in separate Python subprocesses. The parent enforces an overall timeout covering process startup, DNS resolution, and connection attempts. Ping is also limited by a parent-process timeout.
+- Measured duration includes process and cleanup overhead; it is not a network-latency measurement or a strict real-time timing guarantee.
+- Real loopback ping success was personally verified. Real ICMP no-response scenarios, IPv6 network integration, cross-distribution ping compatibility, and load testing remain unverified.
+- Checks expect hosts to be reachable and TCP ports to be open. Expected-closed-port policies, HTTP checks, retries, concurrency, and scheduling are not implemented.
