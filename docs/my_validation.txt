@@ -1,19 +1,18 @@
-Linux 网络自动化测试：个人验证记录
+Linux Network Testing: Personal Validation Record
 
-验证环境：
-Ubuntu Linux，Python 3.12.3。
+Validation environment:
+Ubuntu Linux, Python 3.12.3.
 
-已完成：
-1. 运行完整自动化测试，24项通过。
-2. 运行本机演示，正确识别开放和关闭端口。
-3. 查看并理解 run.log、results.json、results.csv。
-4. 使用配置文件检查本机连通性及服务端口。
-5. 修改目标端口为8001，验证配置能够生效。
-6. 输入无效超时0，程序拒绝配置，退出码为2。
-7. 运行无效超时自动化测试，通过。
-8. 阅读NET-001历史缺陷报告及修复前证据。
-9. 执行无效主机名复测和正常主机名回归，均通过。
+Completed activities:
+1. Ran the complete automated test suite; all 24 tests passed.
+2. Ran the local demonstration and verified the expected results for listening and non-listening TCP ports.
+3. Reviewed run.log, results.json, and results.csv.
+4. Used a configuration file to check loopback connectivity and a local service port.
+5. Changed the target port to 8001 and verified that the configuration took effect.
+6. Set timeout to 0; confirmed that the tool rejected the configuration and returned exit code 2.
+7. Ran the invalid-timeout automated test; it passed.
+8. Reviewed the bundled NET-001 historical defect report and pre-fix failure evidence.
+9. Ran post-fix checks for invalid hostnames and regression checks for valid hostnames; both passed.
 
-说明：
-NET-001是项目附带的历史缺陷。
-本次亲自完成的是修复后验证，并非首次发现该缺陷。
+Note:
+NET-001 is a bundled historical defect. My work was post-fix verification, not the original discovery of this defect.

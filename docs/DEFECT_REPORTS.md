@@ -1,61 +1,92 @@
-# 缺陷与故障报告
+# Defect and Incident Reports
 
-## NET-001：连续结尾点的非法主机名被配置校验接受
+## NET-001: Hostname Validation Accepts an Invalid Name with Consecutive Trailing Dots
 
-| 字段 | 内容 |
+| Field | Details |
 | --- | --- |
-| 类型 / 来源 | 项目附带的已修复历史实现缺陷；初始开发阶段由自动化测试发现 |
-| 状态 | Closed，已修复并通过回归 |
-| 环境 | Linux，Python 3.12.14，本项目初始开发版本 |
-| 严重程度 | Minor：配置校验遗漏，可导致无效目标进入网络检查 |
-| 优先级 | P2：交付前修复 |
-| 触发条件 | host 为 `x..`，具有连续的结尾点 |
-| 发生频率 | 修复前稳定复现 |
+| Type / source | Bundled, previously fixed implementation defect; found by automated testing during initial development. |
+| Status | Closed; fixed and regression checks passed. |
+| Environment | Linux, Python 3.12.14; initial development version. |
+| Severity | Minor: a configuration validation gap allows an invalid target to reach network checks. |
+| Priority | P2: fix before delivery. |
+| Trigger | Set `host` to `x..`, which contains consecutive trailing dots. |
+| Frequency | Consistently reproducible before the fix. |
 
-前置条件：运行修复前 `valid_host()` 实现。
+### Preconditions
 
-复现步骤：
+Use the pre-fix implementation of `valid_host()`.
 
-1. 将 `host` 设为 `x..`。
-2. 调用 `valid_host('x..')`，或运行 `python3 -m unittest discover -s tests -p test_config.py -v`。
-3. 查看 `test_invalid_targets` 的 `host='x..'` 子用例。
+### Steps to Reproduce
 
-预期：返回 False，拒绝该配置。实际：返回 True，断言 `AssertionError: True is not false`。
+1. Set `host` to `x..`.
+2. Call `valid_host('x..')`, or run `python3 -m unittest discover -s tests -p test_config.py -v`.
+3. Inspect the `host='x..'` subtest in `test_invalid_targets`.
 
-根因：`host.rstrip('.')` 删除了所有结尾点，把 `x..` 错误地规范化为 `x`。修复：使用 `host.removesuffix('.')` 只移除一个合法的 DNS 绝对名称结尾点，保留第二个点供空 label 校验拒绝。`app.example.test.` 仍然允许。
+**Expected:** Return `False` and reject the configuration.
 
-回归：`test_invalid_targets` 验证 `x..` 被拒绝；`test_valid_hosts_and_default_timeout` 验证正常带结尾点的名称仍被接受。最终24项测试通过。
+**Actual:** Return `True`, causing `AssertionError: True is not false`.
 
-证据：
+### Root Cause and Fix
 
-- `docs/evidence/NET-001-before-fix.txt`：修复前真实失败输出。
-- `docs/evidence/automated-tests.txt`：修复后完整测试输出。
+`host.rstrip('.')` removed all trailing dots, incorrectly normalizing `x..` to `x`.
 
-个人验证：本人阅读了该历史缺陷报告及修复前失败证据，并在 Ubuntu / Python 3.12.3 环境执行了修复后的无效主机名复测与正常主机名回归验证，均通过。本人并非该缺陷的首次发现者。
+The fix uses `host.removesuffix('.')` to remove only one trailing dot allowed in an absolute DNS name. For `x..`, the remaining dot causes the subsequent empty-label validation to reject the input. A valid name such as `app.example.test.` remains accepted.
 
-## LAB-001：期望服务端口开放，但端口未监听
+### Regression Verification
 
-这是**模拟测试环境报告**：demo.py 有意创建一个只绑定、不监听的本机端口，用来练习记录故障。它不是本测试工具的缺陷，也不是某个真实业务系统的已发现缺陷。这里的 TCP 失败日志来自真实本机连接。
+- `test_invalid_targets` verifies that `x..` is rejected.
+- `test_valid_hosts_and_default_timeout` verifies that valid names with a trailing dot remain accepted.
+- All 24 tests passed in the final development test run.
 
-| 字段 | 内容 |
+### Evidence
+
+- `docs/evidence/NET-001-before-fix.txt`: historical pre-fix failure output.
+- `docs/evidence/automated-tests.txt`: complete post-fix automated test output.
+
+### My Verification
+
+I reviewed this historical report and the pre-fix failure evidence, then ran post-fix invalid-hostname checks and valid-hostname regression checks on Ubuntu with Python 3.12.3. Both passed. I was not the original discoverer of this defect.
+
+## LAB-001: Expected Service Port Is Not Listening
+
+This is a **simulated environment incident report**. `demo.py` intentionally creates a local port that is bound but not listening, to practice documenting a failure. It is neither a defect in the testing tool nor a defect discovered in a production system. The TCP failure evidence comes from a real local connection attempt.
+
+| Field | Details |
 | --- | --- |
-| 类型 / 来源 | 模拟服务环境问题；受控故障 |
-| 状态 | Reproduced；未修改外部服务 |
-| 严重程度 | 假设这是必需的应用端口，则服务连接受阻；练习中无业务影响 |
-| 目标 | 127.0.0.1:45685（仅该次演示有效） |
-| 用例 | local-closed |
-| 运行ID | 20261112T181925-4b78f416 |
+| Type / source | Simulated service environment issue; controlled failure. |
+| Status | Reproduced; no external service was modified. |
+| Severity | If this were a required application port, connections would be blocked. The exercise has no business impact. |
+| Target | `127.0.0.1:45685`, valid only for the recorded demo run. |
+| Check | `local-closed` |
+| Run ID | `20261112T181925-4b78f416` |
 
-复现步骤：
+### Steps to Reproduce
 
-1. 在项目根目录执行 `python3 demo.py`。
-2. 查看终端和该次运行目录中的 `results.json`。
-3. `local-open` 为 PASS，`local-closed` 为 FAIL。
+1. Run `python3 demo.py` from the project root.
+2. Inspect the terminal output and the generated `results.json`.
+3. Verify that `local-open` is PASS and `local-closed` is FAIL.
 
-假设需求下的预期：应用端口应该接受 TCP 连接。实际：`FAIL / connection_refused`，演示 suite 退出码1。JSON记录耗时 20.493 ms。
+**Expected under the hypothetical service requirement:** The application port accepts TCP connections.
 
-已确认原因：该演示端口只执行 bind()，没有执行 listen()。对于真实外部系统，仅根据 connection_refused 不能直接确定“服务未启动”，还应结合进程、监听地址和网络策略检查。
+**Actual:** `FAIL / connection_refused`; suite exit code 1. The historical JSON report records a duration of 20.493 ms.
 
-建议处理与复测：在真实环境中确认服务启动并监听正确地址/端口，再用相同业务配置执行。演示重新运行会分配新端口；旧动态端口不能用于稳定复测。本报告不声称已经修复一个实际业务服务。
+### Confirmed Cause
 
-证据：`sample-results/20261112T181925-4b78f416/results.json`、`results.csv`、`run.log`、`demo-config.json`。
+The demo calls `bind()` on the port but does not call `listen()`.
+
+For an actual external system, `connection_refused` alone is insufficient to establish that the service is stopped. Process state, listening address, and network policies should also be checked.
+
+### Suggested Action and Retest
+
+In a real environment, confirm that the service is running and listening on the intended address and port, then rerun the same service configuration.
+
+Each demo run assigns new ports; old dynamic ports are not stable retest targets. This report does not claim that an actual business service was repaired.
+
+### Evidence
+
+The following files are in `sample-results/20261112T181925-4b78f416/`:
+
+- `results.json`
+- `results.csv`
+- `run.log`
+- `demo-config.json`

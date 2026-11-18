@@ -1,22 +1,22 @@
-# 缺陷报告模板
+# Defect Report Template
 
-- 缺陷编号：
-- 标题：描述具体触发条件与异常行为
-- 类型：产品缺陷 / 环境问题 / 测试配置问题
-- 来源：真实观察 / 模拟练习
-- 环境：系统、Python版本、被测版本、配置
-- 严重程度：说明受影响行为
-- 优先级：说明修复次序及理由
-- 状态：Open / In Progress / Fixed / Closed
-- 前置条件：
-- 复现步骤：
+- Defect ID:
+- Title: Describe the specific trigger and unexpected behavior.
+- Type: Product defect / Environment issue / Test configuration issue
+- Source: Observed behavior / Simulated exercise
+- Environment: Operating system, Python version, version under test, and configuration
+- Severity: Describe the affected behavior and impact.
+- Priority: State the recommended fix order and rationale.
+- Status: Open / In Progress / Fixed / Closed
+- Preconditions:
+- Steps to reproduce:
   1. 
   2. 
-- 预期结果：
-- 实际结果：
-- 出现频率：
-- 证据：运行ID、用例名、日志片段、results.json路径
-- 已确认根因：证据不足时写“待定位”
-- 修复内容：
-- 回归用例与结果：
-- 限制或待跟进项：
+- Expected result:
+- Actual result:
+- Reproduction frequency:
+- Evidence: Run ID, check name, log excerpt, and results.json path
+- Confirmed root cause: Write "Under investigation" if evidence is insufficient.
+- Fix:
+- Regression test cases and results:
+- Limitations or follow-up items:

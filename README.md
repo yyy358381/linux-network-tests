@@ -132,7 +132,7 @@ See [`sample-results/`](sample-results/) for a bundled historical TCP demo run w
 
 ## QA Documentation
 
-The linked documents currently contain Chinese descriptions, with English commands, identifiers, and test output.
+The linked documents include test cases, defect reports, validation records, and historical evidence.
 
 | Document | Contents |
 | --- | --- |

@@ -1,46 +1,47 @@
-# 项目验证记录
+# Project Validation Records
 
-## 初始开发阶段验证（2026-11-12）
+## Initial Development Validation (2026-11-12)
 
-以下为项目附带的历史验证记录，不代表本人独立执行的工作。其中“当前环境”指初始开发阶段使用的环境。
+The following historical records were included with the project. They do not represent work independently performed by me. References to the initial environment refer to the environment used during initial development.
 
-- 日期：2026-11-12。
-- 系统：Linux，Python 3.12.14。
-- 命令：`python3 -m unittest discover -s tests -v`。
-- 结果：24项测试通过，退出码0；完整输出见 `docs/evidence/automated-tests.txt`。
-- 演示：`python3 demo.py --output sample-results`。
-- 演示结果：PASS=1、FAIL=1、ERROR=0，退出码1（符合预期）；运行ID `20261112T181925-4b78f416`。
+- Environment: Linux, Python 3.12.14.
+- Test command: `python3 -m unittest discover -s tests -v`.
+- Result: All 24 tests passed; exit code 0. Full output: `docs/evidence/automated-tests.txt`.
+- Demo command: `python3 demo.py --output sample-results`.
+- Demo result: PASS=1, FAIL=1, ERROR=0; exit code 1, as expected. Run ID: `20261112T181925-4b78f416`.
 
-## 已实际执行
+### Checks Executed During Initial Development
 
-- 子进程真实连接本机监听端口，成功建立并关闭连接。
-- 子进程连接只绑定而不监听的本机端口，被明确拒绝。
-- CLI读取配置、执行探测、保存日志/JSON/CSV、返回失败退出码。
-- 人为阻塞子进程DNS路径5秒，父进程0.2秒超时后终止并回收子进程；使用1.5秒宽容上限验证。
-- 缺少ping的环境路径，CLI返回2并保存ERROR结果。
-- 修复前非法主机名缺陷复现、修复后回归。
+- A subprocess connected to a listening local TCP port, then closed the connection.
+- A subprocess attempted to connect to a local port that was bound but not listening; the connection was refused.
+- The CLI read a configuration, ran probes, saved log/JSON/CSV reports, and returned the expected failure exit code.
+- A controlled replacement blocked the subprocess DNS resolution path for 5 seconds. With a 0.2-second timeout, the parent terminated and reaped the subprocess. The test allowed an elapsed-time upper bound of 1.5 seconds.
+- In an environment without `ping`, the CLI returned exit code 2 and saved an ERROR result.
+- The invalid-hostname defect was reproduced before the fix, and regression checks passed after the fix.
 
-## 模拟验证及限制
+### Mock-Based Validation and Initial Limitations
 
-- 当前环境没有ping可执行文件，未执行真实ICMP成功/无响应检查；调用参数、退出码、超时和判定分支使用mock验证。
-- DNS失败、路由不可达、部分权限错误通过mock产生，未修改主机网络或防火墙。
-- IPv6和域名配置的校验已测试，未完成真实IPv6网络集成验证。
-- 未做大规模压力测试或在不同Linux发行版上验证ping兼容性。
-- 本机TCP结果证明TCP握手状态，不代表应用层业务功能通过。
+- The initial environment had no `ping` executable. Real ICMP success and no-response paths were not executed there; command arguments, exit codes, timeouts, and classification branches were tested with mocks.
+- DNS failures, unreachable routes, and some permission errors were produced with mocks. Host networking and firewall settings were not modified.
+- IPv6 and hostname configuration validation were tested; real IPv6 network integration was not verified.
+- Load testing and ping compatibility across Linux distributions were not verified.
+- Local TCP results establish connection behavior, not application-level business functionality.
 
-## 个人 Ubuntu 验证（2026-11-17）
+## Personal Ubuntu Validation (2026-11-17)
 
-以下操作由本人在指导下执行。
+I performed the following activities with guidance:
 
-- 环境：Ubuntu，Python 3.12.3。
-- 运行完整自动化测试套件，24 项通过。
-- 运行本机 TCP 演示，观察到开放端口 PASS、关闭端口 FAIL，符合预期。
-- 查看并分析 run.log、results.json 和 results.csv。
-- 使用 configs/local.json，验证 127.0.0.1 的真实 ping 成功。
-- 启动和停止本机 HTTP 服务，验证 TCP 端口检查随监听状态变化。
-- 将目标端口从 8000 改为 8001，验证配置生效。
-- 将 timeout 设为 0，验证程序拒绝配置并返回退出码 2。
-- 执行无效超时相关自动化测试，通过。
-- 阅读 NET-001 历史报告与修复前证据，执行修复后复测和正常主机名回归验证，均通过。
+- Used Ubuntu with Python 3.12.3.
+- Ran the complete automated test suite; all 24 tests passed.
+- Ran the local TCP demonstration; the listening port passed and the non-listening port failed, as expected.
+- Reviewed `run.log`, `results.json`, and `results.csv`.
+- Used `configs/local.json` to verify a successful real ping to `127.0.0.1`.
+- Started and stopped a local HTTP server and verified that TCP results changed with its listening state.
+- Changed the target port from 8000 to 8001 and verified that the configuration took effect.
+- Set `timeout` to 0 and verified configuration rejection with exit code 2.
+- Ran the invalid-timeout automated test; it passed.
+- Reviewed the NET-001 historical report and pre-fix evidence, then ran post-fix checks and valid-hostname regression checks; both passed.
 
-本次个人验证补充了真实 ICMP 成功路径；未验证真实 ICMP 无响应、真实 IPv6 网络或其他 Linux 发行版兼容性。
+This personal validation added coverage of the real ICMP success path. Real ICMP no-response behavior, real IPv6 networking, and compatibility with other Linux distributions remain unverified.
+
+See `docs/my_validation.txt` for the personal validation checklist. The bundled evidence and sample reports retain their original development dates and environment details.
